@@ -3,12 +3,27 @@ import requests
 import json
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
+import os
+import base64
 
 ua = UserAgent()
 
 ###例外クラス###
 class TwitterError(Exception):
     pass
+
+###追加###
+# 加工した画像ファイルをbase64変換する
+from io import BytesIO
+import base64
+from PIL import Image, ImageDraw, ImageFont
+
+def pil_to_base64(img):
+    buffer = BytesIO()
+    img.save(buffer, format="jpeg")
+    img_str = base64.b64encode(buffer.getvalue()).decode("ascii")
+    return img_str
+
 
 
 ###ログイン無し情報取得###
@@ -1523,3 +1538,37 @@ class API(object):
         response = requests.post('https://twitter.com/i/api/i/account/change_password.json', headers=self.headers, data=data).json()
 
         return response
+
+
+#追加
+
+    def update_profile(self, data):
+        """
+        Args:
+            data (dict): 
+            {
+                'birthdate_year': '2000',
+                'birthdate_month': '1',
+                'birthdate_day': '1',
+                'birthdate_visibility': 'self',
+                'birthdate_year_visibility': 'self',
+                'displayNameMaxLength': 50,
+                'url': 'https://twitter.com/_SNQ',
+                'name': 'bot',
+                'description': 'yoyo!',
+                'location': 'JP'
+            }
+        """
+        response = requests.post('https://twitter.com/i/api/1.1/account/update_profile.json', headers=self.headers, data=data).json()
+        return response
+
+    
+    def update_profile_image(self, img_path):
+        src_img = Image.open(img_path)
+        img_str = pil_to_base64(src_img)
+        data = {
+            'image': img_str
+        }
+        response = requests.post('https://twitter.com/i/api/1.1/account/update_profile_image.json', headers=self.headers, data=data).json()
+        return response
+
